@@ -1,5 +1,7 @@
 import Chat from "../models/chat.model";
+import Message from "../models/message.model";
 import User from "../models/user.model";
+import { BadRequestError, NotFoundError, UnauthorizedError, ValidationError } from "../utils/errors";
 
 
 /**
@@ -24,24 +26,38 @@ export default class ChatController {
      */
     static async createChat(req, res, next) {
         try {
-            const { name, chatType } = req.body;
+            const { name, isGroup, username } = req.body;
 
-            const { userid } = req.headers;
-            if (!userid) return res.status(400).json({error:'userid not found'})
-            const user = await User.findOne({ id: userid });
-            if (!user) return res.status(404).json({error:'user not found'});
-
-            if (!name) return res.status(404).json({error:'name not found'});
-            if (!chatType) return res.status(404).json({error:'chat type not found'});
-            if (!['single-chat', 'group-chat'].includes(chatType)) return res.status(400).json({error:'invalid chat type'})
+            const user = req.user;
 
             const chat = new Chat();
-            chat.creator = user;
-            chat.name = name;
-            chat.participants.push(user);
-            chat.chatType = chatType;
+            chat.admins.push(user.id);
+            chat.isGroup = isGroup;
 
-            user.chats.push(chat);
+            user.chats.push(chat.id);
+            chat.participants.push(user.id);
+
+            if (isGroup) {
+                if (!name) throw new ValidationError('"name" required for a group chat');
+                chat.name = name;
+
+            } else {
+                if (!username) throw new ValidationError('"username" required for single chat');
+                if (username === user.username) throw new BadRequestError('Cannot create a chat with yourself');
+
+            }
+            if (username) {
+                const toUser = await User.findOne({ username }, { password: 0 });
+                if (!toUser) throw new NotFoundError('User');
+
+                chat.admins.push(toUser.id);
+                chat.participants.push(toUser.id);
+
+                toUser.chats.push(chat.id);
+                toUser.save()
+                chat.name = (isGroup) ? (name) : ((toUser.firstName) ? (toUser.firstName) : (toUser.username));
+
+            }
 
             chat.save();
             user.save();
@@ -89,8 +105,8 @@ export default class ChatController {
         try {
             const { chatId } = req.params;
 
-            const chat = await Chat.findOne({ id: chatId });
-            if (!chat) return res.status(404).json({error:'chat not found'});
+            const chat = await Chat.findOne({ _id: chatId });
+            if (!chat) throw new NotFoundError('Chat');
 
             return res.json({ chat });
 
@@ -115,14 +131,13 @@ export default class ChatController {
             const { chatId } = req.params;
 
             const update = req.body;
-            update.edited = true;
 
             const chat = await Chat.findOneAndUpdate(
-                { id: chatId },
+                { _id: chatId },
                 update,
                 { returnDocument: 'after' }
             );
-            if (!chat) return res.json({error:'chat not found'});
+            if (!chat) throw new NotFoundError('Chat');
 
             return res.json({ chat });
 
@@ -146,10 +161,159 @@ export default class ChatController {
         try {
             const { chatId } = req.params;
 
-            const chat = await Chat.findOneAndDelete({ id: chatId });
-            if (!chat) return res.json({error:'chat not found'});
+            const chat = await Chat.findOneAndDelete({ _id: chatId });
+            if (!chat) throw new NotFoundError('Chat');
 
             return res.json({});
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Adds a message to Chat
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async addMessage(req, res, next) {
+        try {
+            const user = req.user;
+            const { chatId } = req.params;
+
+            const { text } = req.body;
+
+            const chat = await Chat.findOne({ _id: chatId });
+            if (!chat) throw new NotFoundError('Chat');
+
+            if (!chat.participants.includes(user.id)) throw new UnauthorizedError('You are not in this chat');
+
+            const message = new Message();
+            message.chat = chat;
+            message.author = user;
+            message.text = text;
+
+            chat.messages.push(message.id);
+
+            message.save();
+            chat.save();
+
+            return res.json({ message });
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Get Chat messages
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getMessages(req, res, next) {
+        try {
+            const user = req.user;
+
+            const { chatId } = req.params;
+            const chat = await Chat.findOne({ _id: chatId });
+            if (!chat) throw new NotFoundError('Chat');
+
+            if (!chat.participants.includes(user.id)) throw new UnauthorizedError('You are not in this chat');
+
+            const messages = await Message.find({ _id: chat.messages });
+
+            return res.json({ messages });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Add participants to Chat
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async addParticipant(req, res, next) {
+        try {
+
+            const user = req.user;
+
+            const { chatId } = req.params;
+
+            const { username } = req.body;
+
+            const chat = await Chat.findOne({ _id: chatId });
+            if (!chat) throw new NotFoundError('Chat');
+
+            if (!chat.admins.includes(user.id)) throw new UnauthorizedError('You are not an admin of the chat');
+            const toAdd = await User.findOne({ username }, { password: 0 });
+            if (!toAdd) throw new NotFoundError('User');
+
+            // if (chat.participants.includes(toAdd.id)) throw new BadRequestError('User already in chat');
+
+            let added = false;
+            if (!chat.participants.includes(toAdd.id)) {
+                chat.participants.push(toAdd.id);
+                toAdd.chats.push(chat.id);
+                added = true;
+            } else {
+                chat.participants.pop(toAdd.id);
+                chat.admins.pop(toAdd.id);
+                toAdd.chats.pop(chat.id);
+            }
+
+            chat.save();
+            toAdd.save();
+
+            return res.json({ added, chat });
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Gets Chat participants
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getParticipants(req, res, next) {
+        try {
+            const user = req.user;
+
+            const { chatId } = req.params;
+
+            const chat = await Chat.findOne({ _id: chatId });
+            if (!chat) throw new NotFoundError('Chat');
+
+            if (!chat.participants.includes(user.id)) throw new UnauthorizedError('You are not in this chat');
+
+            const participants = await User.find({ _id: chat.participants });
+
+            return res.json({ participants });
 
         } catch (err) {
             console.error(err);

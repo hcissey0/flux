@@ -27,8 +27,6 @@ export default class CommentController {
         try {
             const { text, postId } = req.body;
 
-            if (!text) throw new NotFoundError('"text"')
-
             const user = req.user;
 
             const post = await Post.findOne({ _id: postId});
@@ -90,9 +88,9 @@ export default class CommentController {
             const { commentId } = req.params;
 
             const comment = await Comment.findOne({ _id: commentId });
-            if (!comment) return res.status(404).json({error:'comment not found'});
+            if (!comment) throw new NotFoundError('Comment');
 
-            res.json({comment});
+            res.json({ comment });
 
         } catch (err) {
             console.error(err);
@@ -122,9 +120,9 @@ export default class CommentController {
                 update,
                 { returnDocument: 'after' }
             );
-            if (!comment) return res.status(404).json({error:'comment not found'});
+            if (!comment) throw new NotFoundError('Comment');
 
-            return res.json({comment});
+            return res.json({ comment });
 
         } catch (err) {
             console.error(err);
@@ -148,9 +146,138 @@ export default class CommentController {
 
             const comment = await Comment.findOneAndDelete({ _id: commentId });
 
-            if (!comment) return res.status(404).json({error:'comment not found'});
+            if (!comment) throw new NotFoundError('Comment');
 
             return res.json({});
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Likes a Comment
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async likeComment(req, res, next) {
+        try {
+            const { commentId } = req.params;
+
+            const user = req.user;
+
+            const comment = await Comment.findOne({ _id: commentId });
+            if (!comment) throw new NotFoundError('Comment');
+
+            let liked = false;
+            if (!comment.likes.includes(user.id)) {
+                comment.likes.push(user);
+                liked = true;
+            } else {
+                comment.likes.pop(user);
+            }
+
+            comment.save();
+
+            return res.json({});
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Get Comment Likes
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getLikes(req, res, next) {
+        try {
+            const { commentId } = req.params;
+
+            const comment = await Comment.findOne({ _id: commentId });
+            if (!comment) throw new NotFoundError('Comment');
+
+            const likes = await User.find({ _id: comment.likes }, { password: 0 });
+            return res.json({ likes });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Reply to Comment
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async replyToComment(req, res, next) {
+        try {
+            const { commentId } = req.params;
+
+            const user = req.user;
+
+            const comment = await Comment.findOne({ _id: commentId });
+            if (!comment) throw new NotFoundError('Comment');
+
+            const reply = new Comment();
+            reply.author = user;
+            reply.post = comment.post;
+            reply.text = req.body.text;
+            reply.reply = true;
+
+            comment.replies.push(reply);
+            user.comments.push(reply);
+
+            reply.save();
+            comment.save();
+            user.save();
+
+            return res.status(201).json({ reply });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Get Comment replies
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getReplies(req, res, next) {
+        try {
+            const { commentId } = req.params;
+
+            const comment = await Comment.findOne({ _id: commentId });
+            if (!comment) throw new NotFoundError('Comment');
+
+            const replies = await Comment.find({ _id: comment.replies });
+            return res.json({ replies });
 
         } catch (err) {
             console.error(err);

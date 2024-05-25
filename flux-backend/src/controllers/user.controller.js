@@ -149,28 +149,6 @@ export default class UserController {
     }
 
     /**
-     * Gets the current User
-     *
-     * @static
-     * @async
-     * @param {import('express').Request} req
-     * @param {import('express').Response} res
-     * @param {import('express').NextFunction} next
-     * @returns {unknown}
-     */
-    static async getMe(req, res, next) {
-        try {
-            const user = req.user;
-
-            return res.json({ user })
-
-        } catch (err) {
-            console.error(err);
-            next(err);
-        }
-    }
-
-    /**
      * Follows a User
      *
      * @static
@@ -182,7 +160,9 @@ export default class UserController {
      */
     static async followUser(req, res, next) {
         try {
+            const cUser = req.user
             const { userId } = req.params;
+            if (cUser.id === userId) throw new BadRequestError('You cannot follow yourself')
 
             const user = await User.findOne({ _id: userId }, { password: 0 });
             if (!user) throw new NotFoundError('User');
@@ -191,12 +171,12 @@ export default class UserController {
             let followed = false;
 
             if (!user.followers.includes(currentUser.id)) {
-                user.followers.push(currentUser);
-                currentUser.following.push(user);
+                user.followers.push(currentUser.id);
+                currentUser.following.push(user.id);
                 followed = true;
             } else {
-                user.followers.pop(currentUser);
-                currentUser.following.pop(currentUser);
+                user.followers.pop(currentUser.id);
+                currentUser.following.pop(currentUser.id);
             }
             currentUser.save();
             user.save();

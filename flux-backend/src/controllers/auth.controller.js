@@ -28,9 +28,30 @@ export default class AuthController {
             const user = await User.findOne({ username, password });
             if (!user) throw new UnauthorizedError('Invalid credentials');
             const token = generateToken(user.id);
-            console.log(user.id)
 
             return res.json({ user, token });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Gets the current User
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getMe(req, res, next) {
+        try {
+            const user = req.user;
+
+            return res.json({ user })
 
         } catch (err) {
             console.error(err);

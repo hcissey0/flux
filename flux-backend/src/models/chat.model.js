@@ -6,15 +6,14 @@ export const chatSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    creator: {
+    admins: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-    },
-    chatType: {
-        type: String,
-        required: true,
-        enum: ['single-chat', 'group-chat']
+    }],
+    isGroup: {
+        type: Boolean,
+        default: false,
     },
     participants: [{
         type: mongoose.Schema.Types.ObjectId,

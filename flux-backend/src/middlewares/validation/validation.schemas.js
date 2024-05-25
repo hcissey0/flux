@@ -31,6 +31,7 @@ export const postUpdateSchema = Joi.object({
 export const commentCreateSchema = Joi.object({
     text: Joi.string().required(),
     reply: Joi.boolean().default(false).optional(),
+    postId: Joi.string().optional(),
 });
 
 export const commentUpdateSchema = Joi.object({
@@ -39,10 +40,9 @@ export const commentUpdateSchema = Joi.object({
 
 // Chat validation schemas
 export const chatCreateSchema = Joi.object({
-    name: Joi.string().min(2).required(),
-    chatType: Joi.string()
-        .custom((value, helpers) => ['single-chat','group-chat'].includes(value) ? value : helpers.error('any.invalid'))
-        .required(),
+    name: Joi.string().min(2).optional(),
+    isGroup: Joi.boolean().required(),
+    username: Joi.string().optional(),
 });
 
 export const chatUpdateSchema = Joi.object({
@@ -56,4 +56,8 @@ export const messageCreateSchema = Joi.object({
 
 export const messageUpdateSchema = Joi.object({
     text: Joi.string().required(),
+});
+
+export const addParticipantSchema = Joi.object({
+    username: Joi.string().required(),
 });

@@ -33,7 +33,7 @@ export default class PostController {
             post.author = user;
             post.text = text;
 
-            user.posts.push(post);
+            user.posts.push(post.id);
 
             post.save();
             user.save();
@@ -168,10 +168,10 @@ export default class PostController {
 
             let liked = false;
             if (!post.likes.includes(user.id)) {
-                post.likes.push(user);
+                post.likes.push(user.id);
                 liked = true;
             } else {
-                post.likes.pop(user);
+                post.likes.pop(user.id);
             }
             post.save();
 
@@ -229,12 +229,12 @@ export default class PostController {
 
             let saved = false;
             if (!user.savedPosts.includes(post.id)) {
-                post.saves.push(user);
-                user.savedPosts.push(post);
+                post.saves.push(user.id);
+                user.savedPosts.push(post.id);
                 saved = true;
             } else {
-                post.saves.pop(user);
-                user.savedPosts.pop(post);
+                post.saves.pop(user.id);
+                user.savedPosts.pop(post.id);
             }
             user.save();
             post.save();
@@ -299,8 +299,8 @@ export default class PostController {
             comment.post = post;
             comment.reply = reply;
 
-            user.comments.push(comment);
-            post.comments.push(comment);
+            user.comments.push(comment.id);
+            post.comments.push(comment.id);
 
             user.save();
             comment.save();
