@@ -2,11 +2,6 @@ import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
 export const userSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    default: uuidv4,
-    primaryKey: true
-  },
   firstName: {
     type: String,
   },
@@ -41,7 +36,15 @@ export const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Chat',
   }],
-}, { timestamps: true });
+  followers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  following: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+}, { timestamps: true, id: true });
 
 const User = mongoose.model('User', userSchema);
 export default User;

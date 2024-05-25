@@ -6,26 +6,29 @@ import chatRouter from './routes/chat.routes';
 import messageRouter from './routes/message.routes';
 import postRouter from './routes/post.routes';
 import commentRouter from './routes/comment.routes';
-import { errorHandler, apiErrorHandler } from './utils/handlers';
+import { apiErrorHandler } from './utils/handlers';
+import authRouter from './routes/auth.routes';
 
 const app = express();
 app.use(express.json());
 
+// The auth routes
+app.use('/api/auth', authRouter);
+
 // The user routes
-app.use('/users', userRouter);
+app.use('/api/users', userRouter);
 
 // The post routes
-app.use('/posts', postRouter);
+app.use('/api/posts', postRouter);
 
 // The comment routes
-app.use('/comments', commentRouter);
+app.use('/api/comments', commentRouter);
 
 // The chat routes
-app.use('/chats', chatRouter);
+app.use('/api/chats', chatRouter);
 
 // The message routes
-app.use('/messages', messageRouter);
-
+app.use('/api/messages', messageRouter);
 
 // The error handler
 app.use(apiErrorHandler);

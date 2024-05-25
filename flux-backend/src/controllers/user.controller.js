@@ -1,4 +1,5 @@
 import User from "../models/user.model";
+import { BadRequestError, NotFoundError } from "../utils/errors";
 
 
 /**
@@ -16,30 +17,37 @@ export default class UserController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async createUser(req, res) {
-        const {
-            firstName,
-            lastName,
-            username,
-            password,
-            email
-        } = req.body;
+    static async createUser(req, res, next) {
+        try {
+            const {
+                firstName,
+                lastName,
+                username,
+                password,
+                email
+            } = req.body;
 
-        const userAvail = await User.findOne({ username });
-        if (userAvail) return res.json({error:'user already available'})
+            const userAvail = await User.findOne({ username }, { password: 0 });
+            if (userAvail) throw new BadRequestError('User already available');
 
-        const user = new User();
-        user.firstName = firstName;
-        user.lastName = lastName;
-        user.username = username;
-        user.password = password;
-        user.email = email;
+            const user = new User();
+            user.firstName = firstName;
+            user.lastName = lastName;
+            user.username = username;
+            user.password = password;
+            user.email = email;
 
-        user.save();
+            user.save();
 
-        res.json({ user });
+            res.json({ user });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
     }
 
     /**
@@ -49,11 +57,18 @@ export default class UserController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async getAllUsers(req, res) {
-        const users = await User.find();
-        res.json({ users })
+    static async getAllUsers(req, res, next) {
+        try {
+            const users = await User.find({}, { password: 0 });
+
+            return res.json({ users })
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
     }
 
     /**
@@ -63,17 +78,20 @@ export default class UserController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async getUser(req, res) {
-        const { userId } = req.params;
+    static async getUser(req, res, next) {
+        try {
+            const { userId } = req.params;
 
-        const user = await User.findOne({ id: userId });
+            const user = await User.findOne({ _id: userId }, { password: 0 });
+            if (!user) throw new NotFoundError('User');
 
-        if (!user) {
-            res.json({error:'user not found'});
-        } else {
-            res.json({ user });
+            return res.json({ user });
+        } catch (err) {
+            console.error(err);
+            next(err);
         }
     }
 
@@ -83,22 +101,27 @@ export default class UserController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async updateUser(req, res) {
-        const { userId } = req.params;
-        const update = req.body;
+    static async updateUser(req, res, next) {
+        try {
+            const { userId } = req.params;
+            const update = req.body;
 
-        const user = await User.findOneAndUpdate(
-            { id: userId },
-            update,
-            { returnDocument: 'after' }
-        );
+            const user = await User.findOneAndUpdate(
+                { _id: userId },
+                update,
+                { returnDocument: 'after', projection: { password: 0 } }
+            );
 
-        if (user) {
-            res.json({ user });
-        } else {
-            res.json({error:'user not found'});
+            if (!user) throw new NotFoundError('User');
+
+            return res.json({ user });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
         }
     }
 
@@ -108,14 +131,81 @@ export default class UserController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async deleteUser(req, res) {
-        const { userId } = req.params;
+    static async deleteUser(req, res, next) {
+        try {
+            const { userId } = req.params;
 
-        const user = await User.findOneAndDelete({ id: userId });
-        if (!user) return res.status(404).json({error:'user not found'});
+            const user = await User.findOneAndDelete({ _id: userId });
+            if (!user) throw new NotFoundError('User')
 
-        return res.json({});
+            return res.json({});
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Gets the current User
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getMe(req, res, next) {
+        try {
+            const user = req.user;
+
+            return res.json({ user })
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Follows a User
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async followUser(req, res, next) {
+        try {
+            const { userId } = req.params;
+
+            const user = await User.findOne({ _id: userId }, { password: 0 });
+            if (!user) throw new NotFoundError('User');
+
+            const currentUser = req.user;
+            let followed = false;
+
+            if (!user.followers.includes(currentUser.id)) {
+                user.followers.push(currentUser);
+                currentUser.following.push(user);
+                followed = true;
+            } else {
+                user.followers.pop(currentUser);
+                currentUser.following.pop(currentUser);
+            }
+            currentUser.save();
+            user.save();
+
+            return res.json({ followed, user });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
     }
 }

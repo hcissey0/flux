@@ -2,10 +2,6 @@ import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
 export const chatSchema = new mongoose.Schema({
-    id: {
-        type: String,
-        default: uuidv4,
-      },
     name: {
         type: String,
         required: true,
@@ -32,7 +28,7 @@ export const chatSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Message',
     }
-}, { timestamps: true });
+}, { timestamps: true, id: true });
 
 const Chat = mongoose.model('Chat', chatSchema);
 export default Chat;

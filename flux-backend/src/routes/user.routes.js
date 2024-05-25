@@ -1,18 +1,30 @@
 import { Router } from "express";
 import UserController from "../controllers/user.controller";
-import { validateCreateUser } from "../middlewares/validators/user.validators";
-import { idValidator, validate } from "../middlewares/validators.middleware";
+import { validate } from "../middlewares/validation/validation.middlwares";
+import { userCreateSchema, userUpdateSchema } from "../middlewares/validation/validation.schemas";
+import { authenticate } from "../middlewares/authentication/auth.middlwares";
 
 const userRouter = Router();
 
-userRouter.post('/', validateCreateUser, UserController.createUser);
 
-userRouter.get('/', UserController.getAllUsers);
+// create a user
+userRouter.post('/', validate(userCreateSchema), UserController.createUser);
 
-userRouter.get('/:userId', idValidator('userId'), validate, UserController.getUser);
+// get the current user
+userRouter.get('/me', authenticate, UserController.getMe);
 
-userRouter.put('/:userId', UserController.updateUser);
+// get all users
+userRouter.get('/',/* authenticate,*/ UserController.getAllUsers);
 
-userRouter.delete('/:userId', UserController.deleteUser);
+// get a single user
+userRouter.get('/:userId', authenticate, UserController.getUser);
+
+//
+userRouter.put('/:userId', authenticate, validate(userUpdateSchema), UserController.updateUser);
+
+userRouter.delete('/:userId', authenticate, UserController.deleteUser);
+
+userRouter.post('/:userId/follow', authenticate, UserController.followUser);
+
 
 export default userRouter;

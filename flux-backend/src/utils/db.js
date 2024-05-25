@@ -16,3 +16,5 @@ db.on('error', (error) => {
 db.on('open', () => {
     console.log('MongoDB connected succesfully');
 });
+
+export default db;

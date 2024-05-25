@@ -1,18 +1,13 @@
 
-export const errorHandler = (err, req, res, next) => {
-    err.statusCode = err.statusCode || 500;
-    err.status = err.status || 'error';
-
-    res.status(err.statusCode).json({
-        status: err.status,
-        detail: {
-            message: err.message,
-        }
-    });
-};
-
-
-
+/**
+ * API Error Hanlder
+ *
+ * @param {Error} error
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {undefined}
+ */
 export const apiErrorHandler = (err, req, res, next) => {
 
     if (err) {
@@ -33,5 +28,5 @@ export const apiErrorHandler = (err, req, res, next) => {
             });
         }
     }
-    next(err, req, res);
+    next();
 }

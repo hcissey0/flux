@@ -2,10 +2,6 @@ import mongoose, { Mongoose } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
 export const postSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    default: uuidv4,
-  },
   edited: {
     type: Boolean,
     default: false,
@@ -31,7 +27,7 @@ export const postSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', // Reference the User model (who saved the post)
   }],
-}, { timestamps: true });
+}, { timestamps: true, id: true });
 
 const Post = mongoose.model('Post', postSchema);
 export default Post;

@@ -1,6 +1,7 @@
 import Comment from "../models/comment.model";
 import Post from "../models/post.model";
 import User from "../models/user.model";
+import { NotFoundError } from "../utils/errors";
 
 
 /**
@@ -19,32 +20,38 @@ export default class CommentController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async createComment(req, res) {
-        const { userid, postid } = req.headers;
-        const { text } = req.body;
+    static async createComment(req, res, next) {
+        try {
+            const { text, postId } = req.body;
 
-        if (!text) return res.status(404).json({error:'comment text not found'})
+            if (!text) throw new NotFoundError('"text"')
 
-        const user = await User.findOne({id:userid});
-        if (!user) return res.status(404).json({error:'user not found'});
-        const post = await Post.findOne({id:postid});
-        if (!post) return res.status(404).json({error:'post not found'});
+            const user = req.user;
 
-        const comment = new Comment();
-        comment.author = user;
-        comment.post = post;
-        comment.text = text;
+            const post = await Post.findOne({ _id: postId});
+            if (!post) throw new NotFoundError('Post')
 
-        post.comments.push(comment);
-        user.comments.push(comment);
+            const comment = new Comment();
+            comment.author = user;
+            comment.post = post;
+            comment.text = text;
 
-        comment.save();
-        post.save();
-        user.save();
+            post.comments.push(comment);
+            user.comments.push(comment);
 
-        return res.status(201).json({ comment });
+            comment.save();
+            post.save();
+            user.save();
+
+            return res.status(201).json({ comment });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
     }
 
     /**
@@ -54,11 +61,18 @@ export default class CommentController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async getAllComments(req, res) {
-        const comments = await Comment.find();
-        return res.json({ comments });
+    static async getAllComments(req, res, next) {
+        try {
+            const comments = await Comment.find();
+            return res.json({ comments });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
     }
 
     /**
@@ -68,15 +82,22 @@ export default class CommentController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async getComment(req, res) {
-        const { commentId } = req.params;
+    static async getComment(req, res, next) {
+        try {
+            const { commentId } = req.params;
 
-        const comment = await Comment.findOne({ id: commentId });
-        if (!comment) return res.status(404).json({error:'comment not found'});
+            const comment = await Comment.findOne({ _id: commentId });
+            if (!comment) return res.status(404).json({error:'comment not found'});
 
-        res.json({comment});
+            res.json({comment});
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
     }
 
     /**
@@ -86,22 +107,29 @@ export default class CommentController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async updateComment(req, res) {
-        const { commentId } = req.params;
+    static async updateComment(req, res, next) {
+        try {
+            const { commentId } = req.params;
 
-        const update = req.body;
-        update.edited = true;
+            const update = req.body;
+            update.edited = true;
 
-        const comment = await Comment.findOneAndUpdate(
-            { id: commentId },
-            update,
-            { returnDocument: 'after' }
-        );
-        if (!comment) return res.status(404).json({error:'comment not found'});
+            const comment = await Comment.findOneAndUpdate(
+                { _id: commentId },
+                update,
+                { returnDocument: 'after' }
+            );
+            if (!comment) return res.status(404).json({error:'comment not found'});
 
-        return res.json({comment});
+            return res.json({comment});
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
     }
 
     /**
@@ -111,15 +139,22 @@ export default class CommentController {
      * @async
      * @param {import('express').Request} req
      * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
      * @returns {unknown}
      */
-    static async deleteComment(req, res) {
-        const { commentId } = req.params;
+    static async deleteComment(req, res, next) {
+        try {
+            const { commentId } = req.params;
 
-        const comment = await Comment.findOneAndDelete({ id: commentId });
+            const comment = await Comment.findOneAndDelete({ _id: commentId });
 
-        if (!comment) return res.status(404).json({error:'comment not found'});
+            if (!comment) return res.status(404).json({error:'comment not found'});
 
-        return res.json({});
+            return res.json({});
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
     }
 }

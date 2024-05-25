@@ -2,10 +2,6 @@ import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
 export const messageSchema = new mongoose.Schema({
-    id: {
-        type: String,
-        default: uuidv4,
-    },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', // Reference the User model (who created the comment)
@@ -24,7 +20,7 @@ export const messageSchema = new mongoose.Schema({
     ref: 'Chat',
     required: true,
   },
-}, { timestamps: true });
+}, { timestamps: true, id: true });
 
 const Message = mongoose.model('Message', messageSchema);
 export default Message;
