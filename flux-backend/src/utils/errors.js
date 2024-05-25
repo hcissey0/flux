@@ -9,7 +9,7 @@ export class APIError extends Error {
 }
 export class NotFoundError extends APIError {
     constructor(message) {
-        super(404, message + ' not found')
+        super(404, `${message} not found`)
     }
 }
 

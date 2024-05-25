@@ -1,5 +1,5 @@
 require('dotenv').config();
-require('./utils/db');
+import db from './utils/db';
 import express from 'express';
 import userRouter from './routes/user.routes';
 import chatRouter from './routes/chat.routes';
@@ -11,6 +11,26 @@ import authRouter from './routes/auth.routes';
 
 const app = express();
 app.use(express.json());
+
+app.get('/api/status', (req, res) => {
+    res.json({ status: 'OK' });
+});
+
+// to be removed before production
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+app.get('/api/all', async (req, res) => {
+    res.json({
+        modelNames: await db.modelNames(),
+        users: await db.model('User').find(),
+        posts: await db.model('Post').find(),
+        comments: await db.model('Comment').find(),
+        chats: await db.model('Chat').find(),
+        messages: await db.model('Message').find(),
+    })
+})
+
+// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // The auth routes
 app.use('/api/auth', authRouter);

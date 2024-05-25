@@ -18,5 +18,11 @@ userRouter.delete('/:userId', authenticate, UserController.deleteUser);
 
 userRouter.post('/:userId/follow', authenticate, UserController.followUser);
 
+userRouter.get('/:userId/posts', authenticate, UserController.getPosts);
+
+userRouter.get('/:userId/followers', authenticate, UserController.getFollowers);
+
+userRouter.get('/:userId/following', authenticate, UserController.getFollowing);
+
 
 export default userRouter;

@@ -9,13 +9,15 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY || '1d';
 
 /**
  * Generates a JWT Token
+ * (This function is not supposed to be in this
+ * file, but for the benefits of using the constants
+ * in the file, that was why I declared it here.)
  *
  * @param {String} userId
  * @returns {String}
  */
 export const generateToken = (userId)  => {
     const payload = { userId };
-    console.log(payload)
 
     const token = jwt.sign(payload, JWT_SECRET, { algorithm: JWT_ALGORITHM, expiresIn: JWT_EXPIRY });
 

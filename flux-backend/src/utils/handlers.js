@@ -20,6 +20,7 @@ export const apiErrorHandler = (err, req, res, next) => {
                 }
             });
         } else {
+            console.error(err);
             res.status(500).json({
                 error: {
                     statusCode: 500,

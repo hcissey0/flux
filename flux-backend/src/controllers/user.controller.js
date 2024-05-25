@@ -1,4 +1,5 @@
 import User from "../models/user.model";
+import Post from "../models/post.model";
 import { BadRequestError, NotFoundError } from "../utils/errors";
 
 
@@ -182,6 +183,86 @@ export default class UserController {
             user.save();
 
             return res.json({ followed, user });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Get User posts
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getPosts(req, res, next) {
+        try {
+            const { userId } = req.params;
+
+            const user = await User.findOne({ _id: userId }, { password: 0 });
+            if (!user) throw new NotFoundError('User');
+
+            const posts = await Post.find({ _id: user.posts });
+
+            return res.json({ posts });
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Gets User followers
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getFollowers(req, res, next) {
+        try {
+            const { userId } = req.params;
+
+            const user = await User.findOne({ _id: userId }, { password: 0 });
+            if (!user) throw new NotFoundError('User');
+
+            const followers = await User.find({ _id: user.followers }, { password: 0 });
+
+            return res.json({ followers });
+
+        } catch (err) {
+            console.error(err);
+            next(err);
+        }
+    }
+
+    /**
+     * Gets User followings
+     *
+     * @static
+     * @async
+     * @param {import('express').Request} req
+     * @param {import('express').Response} res
+     * @param {import('express').NextFunction} next
+     * @returns {unknown}
+     */
+    static async getFollowing(req, res, next) {
+        try {
+            const { userId } = req.params;
+
+            const user = await User.findOne({ _id: userId }, { password: 0 });
+            if (!user) throw new NotFoundError('User');
+
+            const following = await User.find({ _id: user.following });
+
+            return res.json({ following });
 
         } catch (err) {
             console.error(err);

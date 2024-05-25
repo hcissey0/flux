@@ -263,6 +263,8 @@ export default class ChatController {
             const chat = await Chat.findOne({ _id: chatId });
             if (!chat) throw new NotFoundError('Chat');
 
+            if (!chat.isGroup) throw new BadRequestError('Chat is not a group chat');
+
             if (!chat.admins.includes(user.id)) throw new UnauthorizedError('You are not an admin of the chat');
             const toAdd = await User.findOne({ username }, { password: 0 });
             if (!toAdd) throw new NotFoundError('User');
@@ -280,7 +282,12 @@ export default class ChatController {
                 toAdd.chats.pop(chat.id);
             }
 
-            chat.save();
+            if (Array.isEmpty(chat.admins) && Array.isEmpty(chat.participants)) {
+                await Chat.deleteOne({ _id: chat.id });
+            } else {
+                chat.save();
+            }
+
             toAdd.save();
 
             return res.json({ added, chat });
