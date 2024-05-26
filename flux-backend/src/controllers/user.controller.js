@@ -1,7 +1,7 @@
 import User from "../models/user.model";
 import Post from "../models/post.model";
 import { BadRequestError, NotFoundError } from "../utils/errors";
-
+import { generateHash } from "../utils/encrypters";
 
 /**
  * The User controller
@@ -34,16 +34,20 @@ export default class UserController {
             const userAvail = await User.findOne({ username }, { password: 0 });
             if (userAvail) throw new BadRequestError('User already available');
 
+            const hashedPassword = generateHash(password);
+
             const user = new User();
             user.firstName = firstName;
             user.lastName = lastName;
             user.username = username;
-            user.password = password;
+            user.password = hashedPassword;
             user.email = email;
 
             user.save();
 
-            res.json({ user });
+            const ret = user.toJSON()
+            ret.password = undefined;
+            res.json({ user: ret });
 
         } catch (err) {
             console.error(err);
@@ -139,7 +143,7 @@ export default class UserController {
         try {
             const { userId } = req.params;
 
-            const user = await User.findOneAndDelete({ _id: userId });
+            const user = await User.findOneAndDelete({ _id: userId }, { password: 0 });
             if (!user) throw new NotFoundError('User')
 
             return res.json({});
@@ -260,7 +264,7 @@ export default class UserController {
             const user = await User.findOne({ _id: userId }, { password: 0 });
             if (!user) throw new NotFoundError('User');
 
-            const following = await User.find({ _id: user.following });
+            const following = await User.find({ _id: user.following }, { password: 0 });
 
             return res.json({ following });
 

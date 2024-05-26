@@ -1,7 +1,5 @@
 import { ValidationError } from "../../utils/errors";
 
-
-
 /**
  * Validates all inputs
  *

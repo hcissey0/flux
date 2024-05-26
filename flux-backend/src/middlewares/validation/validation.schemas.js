@@ -2,8 +2,8 @@ import Joi from 'joi';
 
 // User validation schemas
 export const userCreateSchema = Joi.object({
-    firstName: Joi.string().optional(),
-    lastName: Joi.string().optional(),
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
     username: Joi.string().alphanum().required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(2).required(),

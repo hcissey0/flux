@@ -302,9 +302,9 @@ export default class PostController {
             user.comments.push(comment.id);
             post.comments.push(comment.id);
 
-            user.save();
             comment.save();
             post.save();
+            user.save();
 
             return res.json({ comment });
 
@@ -339,15 +339,4 @@ export default class PostController {
             next(err);
         }
     }
-
-    /**
-     * Gets Post Comments
-     *
-     * @static
-     * @async
-     * @param {import('express').Request} req
-     * @param {import('express').Response} res
-     * @param {import('express').NextFunction} next
-     * @returns {unknown}
-     */
 }

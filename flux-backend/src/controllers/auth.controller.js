@@ -3,6 +3,7 @@ import User from '../models/user.model';
 import Post from '../models/post.model';
 import Chat from '../models/chat.model';
 import { AuthenticationError, UnauthorizedError } from '../utils/errors';
+import { generateHash } from '../utils/encrypters';
 
 export default class AuthController {
 
@@ -27,8 +28,11 @@ export default class AuthController {
 
             const [username, password] = atob(credentials.replace('Basic ', '')).split(':');
 
-            const user = await User.findOne({ username, password }, { password: 0 });
+            const hashedPassword = generateHash(password);
+
+            const user = await User.findOne({ username, password: hashedPassword }, { password: 0 });
             if (!user) throw new UnauthorizedError('Invalid credentials');
+
             const token = generateToken(user.id);
 
             return res.json({ user, token });

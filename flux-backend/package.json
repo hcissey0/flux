@@ -4,18 +4,18 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon --exec babel-node --presets babel-preset-env ./src/index.js",
+    "dev": "nodemon --exec babel-node --plugins babel-plugin-inline-dotenv --presets babel-preset-env ./src/index.js",
     "test": "./node_modules/mocha/bin/mocha --require babel-register --exit"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.8",
     "babel-cli": "^6.26.0",
+    "babel-plugin-inline-dotenv": "^1.7.0",
     "babel-preset-env": "^1.7.0",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "express-validator": "^7.1.0",
     "joi": "^17.13.1",
     "jsonwebtoken": "^9.0.2",
     "mocha": "^10.4.0",

@@ -9,4 +9,7 @@ module.exports = {
         },
       ],
     ],
+    plugins: [
+      "babel-plugin-inline-dotenv",
+    ]
 }

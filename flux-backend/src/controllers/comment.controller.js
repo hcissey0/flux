@@ -37,8 +37,8 @@ export default class CommentController {
             comment.post = post;
             comment.text = text;
 
-            post.comments.push(comment);
-            user.comments.push(comment);
+            post.comments.push(comment.id);
+            user.comments.push(comment.id);
 
             comment.save();
             post.save();
@@ -177,15 +177,15 @@ export default class CommentController {
 
             let liked = false;
             if (!comment.likes.includes(user.id)) {
-                comment.likes.push(user);
+                comment.likes.push(user.id);
                 liked = true;
             } else {
-                comment.likes.pop(user);
+                comment.likes.pop(user.id);
             }
 
             comment.save();
 
-            return res.json({});
+            return res.json({ liked, comment });
 
         } catch (err) {
             console.error(err);
@@ -244,8 +244,8 @@ export default class CommentController {
             reply.text = req.body.text;
             reply.reply = true;
 
-            comment.replies.push(reply);
-            user.comments.push(reply);
+            comment.replies.push(reply.id);
+            user.comments.push(reply.id);
 
             reply.save();
             comment.save();

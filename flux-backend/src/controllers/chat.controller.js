@@ -318,7 +318,7 @@ export default class ChatController {
 
             if (!chat.participants.includes(user.id)) throw new UnauthorizedError('You are not in this chat');
 
-            const participants = await User.find({ _id: chat.participants });
+            const participants = await User.find({ _id: chat.participants }, { password: 0 });
 
             return res.json({ participants });
 

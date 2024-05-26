@@ -1,4 +1,3 @@
-require('dotenv').config();
 import db from './utils/db';
 import express from 'express';
 import userRouter from './routes/user.routes';
@@ -21,7 +20,6 @@ app.get('/api/status', (req, res) => {
 
 app.get('/api/all', async (req, res) => {
     res.json({
-        modelNames: await db.modelNames(),
         users: await db.model('User').find(),
         posts: await db.model('Post').find(),
         comments: await db.model('Comment').find(),
