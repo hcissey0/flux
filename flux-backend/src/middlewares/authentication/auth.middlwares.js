@@ -10,7 +10,7 @@ const jwtExpiry = process.env.JWT_EXPIRY || '1d';
 /**
  * Generates a JWT Token
  * (This function is not supposed to be in this
- * file, but for the benefits of using the constants
+ * file, but for the benefit of using the constants
  * in the file, that was why I declared it here.)
  *
  * @param {String} userId
